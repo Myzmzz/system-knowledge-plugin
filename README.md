@@ -2,7 +2,9 @@
 
 面向智能体协作开发的**系统知识基础设施**。它把分散在代码、对话、文档和测试结果中的系统知识，沉淀为**可查询、可维护、可校验**的结构化资产，并通过 MCP Tools、CLI 脚本和 Skill，支持开发前依赖分析、变更影响分析、业务链路测试路径生成与知识图校验。
 
-本仓库**同时是一个 Claude Code 插件，也是一个 Codex 插件**，并且仓库本身就充当两个市场（marketplace）的清单源。仓库根目录即两种工具的插件根目录（没有 `plugins/` 子目录）：共享的 `skills/` 与构建产物 `mcp/index.js` 都位于根目录。
+本仓库**同时是一个 Claude Code 插件，也是一个 Codex 插件**，并且仓库本身就充当两个市场（marketplace）的清单源。两个插件各自打包在子目录下、自包含：`plugins/claude-code/` 与 `plugins/codex/`，每个目录内含自己的清单、`.mcp.json`、`skills/`（从根 `skills/` 同步）和构建产物 `mcp/index.js`。根目录保留两份市场清单（`.claude-plugin/marketplace.json`、`.agents/plugins/marketplace.json`）和共享源码（`mcp-server/`、`cli/`、`skills/`、`knowledge/`）。
+
+> 两个版本均已用真实 CLI 端到端验证：Claude Code（识别 3 skills + 1 MCP server）与 Codex 0.135.0（`codex plugin add` 成功、`codex mcp list` 显示 `system-knowledge` 已启用）。
 
 ---
 
@@ -127,8 +129,8 @@ knowledge audit-diff
 
 安装后：
 
-- `skills/` 下的 Skill 会被自动发现；
-- MCP 服务器 `system-knowledge` 由 `.claude-plugin/plugin.json` 内联声明，Claude Code 通过 `${CLAUDE_PLUGIN_ROOT}/mcp/index.js` 启动它。
+- `plugins/claude-code/skills/` 下的 Skill 会被自动发现；
+- MCP 服务器 `system-knowledge` 由 `plugins/claude-code/.mcp.json` 声明，Claude Code 通过 `${CLAUDE_PLUGIN_ROOT}/mcp/index.js` 启动它。
 
 ---
 
@@ -142,8 +144,8 @@ knowledge audit-diff
 
 安装后：
 
-- `skills/` 下的 Skill 与 Claude Code 共用同一份；
-- MCP 服务器由 `.codex-plugin/plugin.json` 通过 `mcpServers: "./.mcp.json"` 引用，`.mcp.json` 中以**相对路径** `mcp/index.js` 指向构建产物（见下方"MCP 路径解析说明"）。
+- `plugins/codex/skills/` 下的 Skill 与 Claude Code 同源（构建时从根 `skills/` 同步）；
+- MCP 服务器由 `plugins/codex/.codex-plugin/plugin.json` 通过 `mcpServers: "./.mcp.json"` 引用，`plugins/codex/.mcp.json` 中以**相对插件根的路径** `mcp/index.js` 指向构建产物（见下方"MCP 路径解析说明"）。
 
 ---
 
@@ -167,12 +169,13 @@ export SYSTEM_KNOWLEDGE_DIR=/absolute/path/to/your/knowledge
 
 ### MCP 路径解析说明（Claude Code vs Codex）
 
-两种工具对 MCP 启动命令的路径解析机制不同，因此本仓库把两边的配置分开：
+两种工具都用各自的 `.mcp.json` 文件声明 MCP 服务器，但路径写法不同（已分别用真实 CLI 验证）：
 
-- **Claude Code**：在 `.claude-plugin/plugin.json` 中**内联**声明 `mcpServers`，并使用插件根变量 `${CLAUDE_PLUGIN_ROOT}/mcp/index.js`，能稳定定位到安装后的插件目录。
-- **Codex**：`.codex-plugin/plugin.json` 通过 `mcpServers: "./.mcp.json"` 引用根目录的 `.mcp.json`。Codex 官方文档说明插件清单中的路径**相对于插件根、以 `./` 开头**，并向插件 hook 命令注入 `PLUGIN_ROOT` / `PLUGIN_DATA` 环境变量；但文档**未明确**说明可以在 `.mcp.json` 的 `args` 中做 `${PLUGIN_ROOT}` 变量替换。因此本仓库采用文档化的**安全回退方案**：`.mcp.json` 的 `args` 使用相对路径 `["mcp/index.js"]`，由 Codex 从插件根解析。若后续 Codex 确认支持插件根变量，可改为 `["${PLUGIN_ROOT}/mcp/index.js"]`。
+- **Claude Code**：`plugins/claude-code/.mcp.json` 用插件根变量 `${CLAUDE_PLUGIN_ROOT}/mcp/index.js`，能稳定定位安装后的插件目录。（注意：Claude Code 的组件计数读取 `.mcp.json` **文件**，而非 `plugin.json` 里的内联 `mcpServers` 块——所以这里用独立文件。）
+- **Codex**：`plugins/codex/.mcp.json` 用**相对插件根的路径** `["mcp/index.js"]`。Codex 官方文档说明 `.mcp.json` 中的路径相对于插件根解析；实测 Codex 0.135.0 以插件根为工作目录启动该命令，可正常加载 12 个工具。
+- **两个要点（均由真实 CLI 暴露并修正）**：Codex 的 `policy.authentication` 合法值是 `ON_INSTALL` / `ON_USE`（不是 `ON_FIRST_USE`）；且 Codex 不接受仓库根作为插件源，插件必须位于子目录（`./plugins/codex`）。
 
-> 注意：`mcp/index.js`（esbuild 打出的单文件 bundle）**会随仓库一起提交**。因为两个市场的安装方式都是 `git clone`，可运行的 MCP server 必须在仓库内、自包含，无需安装期 `npm install`。
+> 注意：`mcp/index.js`（esbuild 打出的单文件 bundle）**会随仓库一起提交**到每个插件子目录。因为两个市场的安装方式都是 `git clone`（或子目录检出），可运行的 MCP server 必须在仓库内、自包含，无需安装期 `npm install`。
 
 ---
 
@@ -204,7 +207,7 @@ npm run typecheck
 # 运行测试
 npm test
 
-# 构建 MCP server 单文件 bundle -> mcp/index.js
+# 构建 MCP server 单文件 bundle -> plugins/{claude-code,codex}/mcp/index.js（并同步 skills）
 npm run build
 
 # 本地直接跑 MCP server（stdio）
@@ -214,15 +217,17 @@ npm run mcp
 npm run knowledge -- validate
 ```
 
-构建脚本 `scripts/build.mjs` 使用 esbuild 把 `mcp-server/src/index.ts` 打包为 `mcp/index.js`：
+构建脚本 `scripts/build.mjs` 使用 esbuild 把 `mcp-server/src/index.ts` 打包，并分发进两个插件目录：
 
 ```text
 bundle:   true
 platform: node
 format:   esm
 target:   node18
-outfile:  mcp/index.js
+outfile:  plugins/claude-code/mcp/index.js 和 plugins/codex/mcp/index.js
 external: 全部 Node 内置模块（bare 形式与 node: 前缀形式）
+banner:   注入真实 require/__filename/__dirname（修复 ESM 下 "Dynamic require" 崩溃）
+其它:     把根 skills/ 同步复制进每个插件目录
 ```
 
 ---
@@ -231,10 +236,10 @@ external: 全部 Node 内置模块（bare 形式与 node: 前缀形式）
 
 本仓库已备齐两边的市场清单与插件清单：
 
-- Claude Code 市场清单：`.claude-plugin/marketplace.json`
-- Claude Code 插件清单：`.claude-plugin/plugin.json`
-- Codex 市场清单：`.agents/plugins/marketplace.json`
-- Codex 插件清单：`.codex-plugin/plugin.json`
+- Claude Code 市场清单：`.claude-plugin/marketplace.json`（plugin source 指向 `./plugins/claude-code`）
+- Claude Code 插件清单：`plugins/claude-code/.claude-plugin/plugin.json`
+- Codex 市场清单：`.agents/plugins/marketplace.json`（plugin source 指向 `./plugins/codex`）
+- Codex 插件清单：`plugins/codex/.codex-plugin/plugin.json`
 
 通过 `/plugin marketplace add Myzmzz/system-knowledge-plugin` 即可让任意用户从本仓库直接安装。
 
