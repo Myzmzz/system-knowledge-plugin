@@ -1,0 +1,34 @@
+# ============================================================================
+# journeys.yaml — 部署与资源管理平台（DEPLOY-SYSTEM EXAMPLE）
+# ----------------------------------------------------------------------------
+# full-deploy 端到端业务链路，逐字取自 plunginintro.md §5.6。
+# steps 即完整部署主链路；failure_recovery 列出预检与执行验证失败时的恢复动作。
+# ============================================================================
+
+journeys:
+  full-deploy:
+    name: 完整部署链路
+    start: no-system
+    end: deployed-and-verified
+    steps:
+      - cluster-management
+      - application-management
+      - deploy-assets
+      - deploy-config
+      - preflight
+      - execution-verify
+      - resource-management
+    failure_recovery:
+      preflight:
+        - fix-config
+        - re-run-preflight
+      execution-verify:
+        - view-log
+        - retry
+        - rollback
+        - uninstall
+    acceptance:
+      - Helm Release 状态为 deployed
+      - Deployment Ready
+      - Pod Running
+      - 资源管理可同步

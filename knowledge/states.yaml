@@ -1,0 +1,39 @@
+# ============================================================================
+# states.yaml — 状态机与操作门禁登记表（GENERIC TEMPLATE / 通用模板）
+# ----------------------------------------------------------------------------
+# 本文件登记实体的“状态机”：每个状态下哪些操作被允许、哪些被禁用、
+# 哪些页面可见。它回答“功能入口何时可用”这一类问题。
+#
+# 用法：把下面的 ExampleEntity 占位状态机复制一份，改成你自己的实体并删除占位。
+#       状态机名（map 的 key）使用 PascalCase，通常与 entities.yaml 中的实体同名。
+# ============================================================================
+
+# 根 key 必须是 state_machines，下面是 实体名(PascalCase) -> 状态机定义 的映射。
+state_machines:
+  # ↓↓↓ 这是一个占位示例，请替换成你自己的状态机并删除本条 ↓↓↓
+  ExampleEntity:
+    # states: 状态名 -> 状态定义 的映射。每个状态定义可包含：
+    #   label            - 状态的人类可读标签（可选）
+    #   allowed_actions  - 该状态下允许的操作列表（可选）
+    #   disabled_actions - 该状态下被禁用的操作列表（可选）
+    #   visible_pages    - 该状态下可见的页面 / 功能列表（可选）
+    states:
+      draft:
+        label: 草稿
+        allowed_actions:
+          - edit
+        disabled_actions:
+          - activate
+          - delete
+        visible_pages:
+          - example-feature
+
+      active:
+        label: 已激活
+        allowed_actions:
+          - edit
+          - delete
+        disabled_actions:
+          - activate
+        visible_pages:
+          - example-feature

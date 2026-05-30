@@ -1,0 +1,64 @@
+# ============================================================================
+# features.yaml — 功能节点登记表（GENERIC TEMPLATE / 通用模板）
+# ----------------------------------------------------------------------------
+# 本文件登记系统中的“功能节点”。每个功能节点都要放在系统环境中理解：
+# 它依赖什么、产出什么、被谁使用、受哪些状态限制。
+#
+# 用法：把下面的 example-feature 占位条目复制一份，改成你自己的功能，
+#       然后删除这个占位条目。featureId（map 的 key）必须是 kebab-case
+#       （只能包含小写字母 a-z、数字 0-9 和连字符 -），且全局唯一。
+# ============================================================================
+
+# 根 key 必须是 features，下面是 featureId -> 功能定义 的映射。
+features:
+  # ↓↓↓ 这是一个占位示例，请替换成你自己的功能并删除本条 ↓↓↓
+  example-feature:
+    # name: 功能的人类可读名称（必填，不能为空）。
+    name: 示例功能
+
+    # module: 该功能所属的模块 / 子系统（可选）。
+    module: 示例模块
+
+    # description: 一句话说明这个功能在系统里的定位与职责（可选）。
+    description: 这是一个占位功能，用于演示 features.yaml 的结构，请替换为真实功能。
+
+    # maturity: 成熟度。只能取以下四个值之一（可选）：
+    #   idea        - 仅有想法，尚未动工
+    #   prototype   - 原型 / 验证阶段
+    #   usable      - 基本可用
+    #   production  - 生产可用
+    maturity: prototype
+
+    # owner_role: 主要负责的业务角色（可选），例如 运维、前端、测试。
+    owner_role: 示例角色
+
+    # entry_points: 功能入口列表（可选）。每项可包含 page / route / menu 三个字段，
+    #               用来描述从哪个页面、路由或菜单进入该功能。
+    entry_points:
+      - page: 示例页面     # 页面名称
+        route: example     # 前端路由
+        menu: 示例菜单     # 所属菜单项（可省略）
+
+    # code_refs: 与该功能相关的代码路径列表（可选），便于把功能映射回源码。
+    code_refs:
+      - src/example/ExamplePage.tsx
+      - src/example/exampleApi.ts
+
+    # depends_on: 上游依赖的 featureId 列表（可选）。
+    #             每个 id 都必须是 kebab-case，并且应在本文件中真实存在。
+    #             （本占位条目暂时留空，避免指向不存在的功能；请填入真实上游。）
+    depends_on: []
+
+    # provides: 该功能产出的数据或状态（可选），是自由文本标签，不必是 featureId。
+    provides:
+      - example-output-data
+
+    # used_by: 下游消费方的 featureId 列表（可选）。
+    #          每个 id 都必须是 kebab-case，并且应在本文件中真实存在。
+    #          （本占位条目暂时留空，避免指向不存在的功能；请填入真实下游。）
+    used_by: []
+
+    # states: 与该功能相关的状态名列表（可选），通常对应 states.yaml 中的状态。
+    states:
+      - draft
+      - active

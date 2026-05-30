@@ -1,0 +1,20 @@
+{
+  "name": "system-knowledge",
+  "interface": {
+    "displayName": "System Knowledge Graph"
+  },
+  "plugins": [
+    {
+      "name": "system-knowledge-plugin",
+      "source": {
+        "source": "local",
+        "path": "."
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_FIRST_USE"
+      },
+      "category": "Code Quality"
+    }
+  ]
+}

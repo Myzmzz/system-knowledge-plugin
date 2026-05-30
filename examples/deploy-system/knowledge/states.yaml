@@ -1,0 +1,121 @@
+# ============================================================================
+# states.yaml — 部署与资源管理平台（DEPLOY-SYSTEM EXAMPLE）
+# ----------------------------------------------------------------------------
+# DeployTask 状态机以 plunginintro.md §5.5 为基础（draft / precheck_passed 两个
+# 状态逐字保留），并扩展覆盖 entities.yaml 中 DeployTask.status 的全部枚举值：
+#   draft, configured, precheck_passed, running, verified, failed,
+#   uninstalling, uninstalled
+# ============================================================================
+
+state_machines:
+  DeployTask:
+    states:
+      # --- §5.5 原文示例：任务草稿 -------------------------------------------
+      draft:
+        label: 任务草稿
+        allowed_actions:
+          - edit-config
+          - upload-assets
+        disabled_actions:
+          - run-preflight
+          - deploy
+          - uninstall
+        visible_pages:
+          - dashboard
+          - cluster-management
+          - application-management
+          - deploy-assets
+
+      # --- 已配置：可执行预检 ------------------------------------------------
+      configured:
+        label: 已配置
+        allowed_actions:
+          - edit-config
+          - run-preflight
+        disabled_actions:
+          - deploy
+          - uninstall
+        visible_pages:
+          - deploy-config
+          - preflight
+
+      # --- §5.5 原文示例：预检通过 -------------------------------------------
+      precheck_passed:
+        label: 预检通过
+        allowed_actions:
+          - deploy
+          - edit-config
+        disabled_actions:
+          - uninstall
+        visible_pages:
+          - preflight
+          - execution-verify
+
+      # --- 部署执行中 --------------------------------------------------------
+      running:
+        label: 部署执行中
+        allowed_actions:
+          - view-log
+        disabled_actions:
+          - edit-config
+          - deploy
+          - uninstall
+        visible_pages:
+          - execution-verify
+
+      # --- 已验证：部署成功并通过验证 ----------------------------------------
+      verified:
+        label: 已验证
+        allowed_actions:
+          - sync-resource
+          - view-resource-detail
+          - uninstall
+          - export-report
+        disabled_actions:
+          - deploy
+          - run-preflight
+        visible_pages:
+          - execution-verify
+          - resource-management
+          - deploy-report
+
+      # --- 失败：部署或预检失败，需恢复 --------------------------------------
+      failed:
+        label: 部署失败
+        allowed_actions:
+          - view-log
+          - retry
+          - rollback
+          - edit-config
+          - uninstall
+        disabled_actions:
+          - sync-resource
+        visible_pages:
+          - execution-verify
+          - deploy-report
+
+      # --- 卸载中 ------------------------------------------------------------
+      uninstalling:
+        label: 卸载中
+        allowed_actions:
+          - view-log
+        disabled_actions:
+          - edit-config
+          - deploy
+          - uninstall
+        visible_pages:
+          - uninstall
+
+      # --- 已卸载：Release 与资源已回收 --------------------------------------
+      uninstalled:
+        label: 已卸载
+        allowed_actions:
+          - export-report
+        disabled_actions:
+          - deploy
+          - run-preflight
+          - uninstall
+          - sync-resource
+        visible_pages:
+          - dashboard
+          - deploy-report

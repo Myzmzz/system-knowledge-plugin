@@ -1,0 +1,15 @@
+{
+  "name": "system-knowledge-plugin",
+  "version": "0.1.0",
+  "description": "System knowledge graph infrastructure for agent-collaborative development: query feature dependencies, analyze change impact, and generate business-chain test paths.",
+  "author": {
+    "name": "Myzmzz"
+  },
+  "skills": "./skills/",
+  "mcpServers": {
+    "system-knowledge": {
+      "command": "node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/index.js"]
+    }
+  }
+}

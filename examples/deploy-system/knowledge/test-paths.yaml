@@ -1,0 +1,161 @@
+# ============================================================================
+# test-paths.yaml — 部署与资源管理平台（DEPLOY-SYSTEM EXAMPLE）
+# ----------------------------------------------------------------------------
+# deploy-e2e 逐字取自 plunginintro.md §5.7。其余 6 条为 §14 建议登记的测试路径
+# 的有效占位条目，每条都带有真实存在的 target_feature。
+# §14 列出的 full-deploy 是业务链路（见 journeys.yaml），这里登记其对应的
+# 端到端测试路径 deploy-e2e。
+# ============================================================================
+
+test_paths:
+  # --- §5.7 原文示例（逐字保留）：完整部署端到端测试 ------------------------
+  deploy-e2e:
+    name: 部署功能端到端测试
+    target_feature: execution-verify
+    journey: full-deploy
+    preconditions:
+      - cluster-management.cluster-connected
+      - application-management.application-selected
+      - deploy-assets.assets-parsed
+      - deploy-config.configured
+      - preflight.precheck-passed
+    steps:
+      - 保存部署配置
+      - 执行预检
+      - 点击部署
+      - 查看实时日志
+      - 同步资源
+    assertions:
+      - Helm Release 为 deployed
+      - Deployment Ready
+      - Pod Running
+      - Service 已创建
+      - 报告可导出
+    regression_scope:
+      - dashboard
+      - deploy-config
+      - preflight
+      - resource-management
+      - uninstall
+
+  # --- 局部服务更新：只更新部分服务后的重部署 ------------------------------
+  partial-service-update:
+    name: 局部服务更新测试
+    target_feature: deploy-config
+    journey: full-deploy
+    preconditions:
+      - deploy-config.configured
+      - execution-verify.deployed-and-verified
+    steps:
+      - 修改部分服务的 Helm values
+      - 重新执行预检
+      - 仅对变更服务执行部署
+    assertions:
+      - 仅变更服务被更新
+      - 未变更服务保持原 Release
+      - Deployment Ready
+    regression_scope:
+      - deploy-config
+      - preflight
+      - execution-verify
+      - resource-management
+
+  # --- 预检拦截：预检不通过时的门禁拦截 ------------------------------------
+  preflight-blocked:
+    name: 预检拦截测试
+    target_feature: preflight
+    journey: full-deploy
+    preconditions:
+      - deploy-config.configured
+    steps:
+      - 构造不满足前置条件的配置
+      - 执行预检
+    assertions:
+      - 预检结果为不通过
+      - 部署按钮被禁用
+      - 给出明确的失败原因
+    regression_scope:
+      - deploy-config
+      - preflight
+      - execution-verify
+
+  # --- 卸载链路：卸载已部署应用 --------------------------------------------
+  uninstall-flow:
+    name: 卸载链路测试
+    target_feature: uninstall
+    journey: full-deploy
+    preconditions:
+      - execution-verify.deployed-and-verified
+      - resource-management.resource-list
+    steps:
+      - 进入卸载页面
+      - 确认卸载危险操作
+      - 执行卸载
+    assertions:
+      - Helm Release 被删除
+      - 相关 Kubernetes 资源被回收
+      - 任务状态变为 uninstalled
+    regression_scope:
+      - execution-verify
+      - resource-management
+      - uninstall
+      - deploy-report
+
+  # --- 多应用切换：在多个应用间切换上下文 ----------------------------------
+  application-switching:
+    name: 多应用切换测试
+    target_feature: application-management
+    journey: full-deploy
+    preconditions:
+      - cluster-management.cluster-connected
+    steps:
+      - 选择应用 A
+      - 切换到应用 B
+      - 校验资产与配置上下文随之切换
+    assertions:
+      - 部署资产对应当前应用
+      - 部署配置对应当前应用
+      - 资源管理按当前应用过滤
+    regression_scope:
+      - application-management
+      - deploy-assets
+      - deploy-config
+      - resource-management
+
+  # --- 资产上传与解析：上传部署资产并解析 ----------------------------------
+  asset-upload-and-parse:
+    name: 资产上传与解析测试
+    target_feature: deploy-assets
+    journey: full-deploy
+    preconditions:
+      - application-management.application-selected
+    steps:
+      - 上传部署资产
+      - 触发解析
+      - 查看解析出的服务模块与依赖组件
+    assertions:
+      - 资产解析成功
+      - 服务模块列表非空
+      - 依赖组件被识别
+    regression_scope:
+      - deploy-assets
+      - deploy-config
+
+  # --- 资源同步与详情：同步资源并查看详情 ----------------------------------
+  resource-sync-and-detail:
+    name: 资源同步与详情测试
+    target_feature: resource-management
+    journey: full-deploy
+    preconditions:
+      - execution-verify.deployed-and-verified
+    steps:
+      - 同步资源
+      - 打开某个 Deployment 详情
+      - 查看 Pod 与 Service 状态
+    assertions:
+      - 资源列表与集群实际状态一致
+      - Deployment 详情可展开
+      - Pod Running 且 Service 已创建
+    regression_scope:
+      - execution-verify
+      - resource-management

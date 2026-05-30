@@ -1,0 +1,40 @@
+# ============================================================================
+# journeys.yaml — 端到端业务链路登记表（GENERIC TEMPLATE / 通用模板）
+# ----------------------------------------------------------------------------
+# 本文件登记完整的“业务链路”：从起点到终点要按顺序经过哪些功能、
+# 在哪些功能失败时如何恢复、整条链路的验收条件是什么。
+# 它让测试从“完整业务链路”出发，而不是从“单个按钮动作”出发。
+#
+# 用法：把下面的 example-journey 占位链路复制一份，改成你自己的链路并删除占位。
+#       journeyId（map 的 key）必须是 kebab-case，且全局唯一。
+# ============================================================================
+
+# 根 key 必须是 journeys，下面是 journeyId -> 链路定义 的映射。
+journeys:
+  # ↓↓↓ 这是一个占位示例，请替换成你自己的业务链路并删除本条 ↓↓↓
+  example-journey:
+    # name: 链路的人类可读名称（必填，不能为空）。
+    name: 示例业务链路
+
+    # start: 链路起点的描述（可选），自由文本，如 "no-system"、"未登录"。
+    start: example-start
+
+    # end: 链路终点 / 目标状态的描述（可选），自由文本。
+    end: example-end
+
+    # steps: 链路按顺序经过的 featureId 列表（可选）。
+    #        每个 id 都必须是 kebab-case，并应在 features.yaml 中真实存在。
+    steps:
+      - example-feature
+
+    # failure_recovery: 失败恢复动作映射（可选）。
+    #   key   = 可能失败的 featureId（kebab-case，应真实存在）
+    #   value = 该功能失败时，按顺序执行的恢复动作标签列表（自由文本）
+    failure_recovery:
+      example-feature:
+        - retry
+        - rollback
+
+    # acceptance: 整条链路的验收条件列表（可选），自由文本。
+    acceptance:
+      - 占位验收项：请替换为可观察、可判定的真实验收条件。

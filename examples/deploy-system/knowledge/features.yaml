@@ -1,0 +1,277 @@
+# ============================================================================
+# features.yaml — 部署与资源管理平台（DEPLOY-SYSTEM EXAMPLE）
+# ----------------------------------------------------------------------------
+# 这是 plunginintro.md §14 建议的第一批 10 个功能节点的完整示例。
+# 整条主链路为：
+#   cluster-management -> application-management -> deploy-assets
+#   -> deploy-config -> preflight -> execution-verify -> resource-management
+# deploy-config 条目逐字采用 plunginintro.md §5.2 的示例。
+# ============================================================================
+
+features:
+  # --- 1. 仪表盘：部署任务总览 -------------------------------------------------
+  dashboard:
+    name: 仪表盘
+    module: 部署流程
+    description: 展示部署任务总览、状态分布和最近活动，作为各功能的统一入口。
+    maturity: usable
+    owner_role: 运维
+    entry_points:
+      - page: 仪表盘
+        route: dashboard
+        menu: 总览
+    code_refs:
+      - 部署系统/prototype/Dashboard.jsx
+    depends_on: []
+    provides:
+      - task-overview
+      - status-summary
+    used_by:
+      - cluster-management
+      - deploy-report
+    states:
+      - draft
+      - running
+      - verified
+      - failed
+
+  # --- 2. 集群管理：接入并管理目标 Kubernetes 集群 ---------------------------
+  cluster-management:
+    name: 集群管理
+    module: 部署流程
+    description: 接入、校验并管理目标 Kubernetes 集群，是整条部署链路的起点。
+    maturity: usable
+    owner_role: 运维
+    entry_points:
+      - page: 集群管理
+        route: cluster
+        menu: 集群
+    code_refs:
+      - 部署系统/prototype/ClusterManagement.jsx
+    depends_on:
+      - dashboard
+    provides:
+      - cluster
+      - cluster-connected
+    used_by:
+      - application-management
+      - deploy-config
+      - resource-management
+    states:
+      - draft
+
+  # --- 3. 应用管理：选择并管理待部署应用 -------------------------------------
+  application-management:
+    name: 应用管理
+    module: 部署流程
+    description: 选择、切换并管理待部署的应用，决定后续资产与配置的来源。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 应用管理
+        route: application
+        menu: 应用
+    code_refs:
+      - 部署系统/prototype/Page1Deploy.jsx
+    depends_on:
+      - cluster-management
+    provides:
+      - application
+      - application-selected
+    used_by:
+      - deploy-assets
+      - deploy-config
+      - resource-management
+      - uninstall
+    states:
+      - draft
+
+  # --- 4. 部署资产：上传并解析部署资产 ---------------------------------------
+  deploy-assets:
+    name: 部署资产
+    module: 部署流程
+    description: 上传并解析部署资产（Helm Chart、镜像清单等），产出服务模块与依赖组件。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 部署资产
+        route: assets
+        menu: 资产
+    code_refs:
+      - 部署系统/prototype/DeployAssets.jsx
+    depends_on:
+      - application-management
+    provides:
+      - parsed-assets
+      - service-modules
+      - dependency-components
+      - assets-parsed
+    used_by:
+      - deploy-config
+    states:
+      - draft
+
+  # --- 5. 部署配置（逐字取自 plunginintro.md §5.2） --------------------------
+  deploy-config:
+    name: 部署配置
+    module: 部署流程
+    description: 配置部署任务、服务参数、依赖组件和 Helm values。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 部署配置
+        route: task
+    code_refs:
+      - 部署系统/prototype/Page1Deploy.jsx
+      - 部署系统/prototype/app.jsx
+    depends_on:
+      - cluster-management
+      - application-management
+      - deploy-assets
+    provides:
+      - deploy-task-config
+      - helm-values
+      - service-overrides
+      - middleware-modes
+    used_by:
+      - preflight
+      - execution-verify
+      - deploy-report
+    states:
+      - draft
+      - configured
+      - changed
+
+  # --- 6. 部署预检：执行前置校验与风险确认 -----------------------------------
+  preflight:
+    name: 部署预检
+    module: 部署流程
+    description: 对部署配置和目标环境执行前置校验，预检通过或风险确认后才放行部署。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 部署预检
+        route: preflight
+        menu: 预检
+    code_refs:
+      - 部署系统/prototype/Preflight.jsx
+    depends_on:
+      - deploy-config
+    provides:
+      - precheck-result
+      - precheck-passed
+    used_by:
+      - execution-verify
+    states:
+      - configured
+      - precheck_passed
+      - failed
+
+  # --- 7. 部署执行与验证：执行部署并验证结果 ---------------------------------
+  execution-verify:
+    name: 部署执行与验证
+    module: 部署流程
+    description: 执行 Helm install/upgrade，查看实时日志，并验证 Release、Deployment、Pod 状态。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 部署执行
+        route: execution
+        menu: 执行
+    code_refs:
+      - 部署系统/prototype/ExecutionVerify.jsx
+    depends_on:
+      - deploy-config
+      - preflight
+    provides:
+      - deploy-result
+      - release-status
+      - deployed-and-verified
+    used_by:
+      - resource-management
+      - deploy-report
+      - uninstall
+    states:
+      - precheck_passed
+      - running
+      - verified
+      - failed
+
+  # --- 8. 资源管理：同步并查看已部署资源 -------------------------------------
+  resource-management:
+    name: 资源管理
+    module: 资源管理
+    description: 同步并查看已部署的 Kubernetes 资源（Deployment、Pod、Service 等）及其详情。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 资源管理
+        route: resource
+        menu: 资源
+    code_refs:
+      - 部署系统/prototype/ResourceManagement.jsx
+    depends_on:
+      - cluster-management
+      - application-management
+      - execution-verify
+    provides:
+      - resource-list
+      - resource-detail
+    used_by:
+      - deploy-report
+      - uninstall
+    states:
+      - verified
+
+  # --- 9. 卸载：删除已部署应用并回收资源 -------------------------------------
+  uninstall:
+    name: 卸载
+    module: 资源管理
+    description: 卸载已部署的应用，删除 Helm Release 并回收相关 Kubernetes 资源（危险操作）。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 卸载
+        route: uninstall
+        menu: 卸载
+    code_refs:
+      - 部署系统/prototype/Uninstall.jsx
+    depends_on:
+      - application-management
+      - execution-verify
+      - resource-management
+    provides:
+      - uninstall-result
+    used_by:
+      - deploy-report
+    states:
+      - verified
+      - uninstalling
+      - uninstalled
+
+  # --- 10. 部署报告：汇总并导出部署结果 --------------------------------------
+  deploy-report:
+    name: 部署报告
+    module: 部署流程
+    description: 汇总部署配置、执行结果、资源状态与卸载记录，生成可导出的部署报告。
+    maturity: prototype
+    owner_role: 运维
+    entry_points:
+      - page: 部署报告
+        route: report
+        menu: 报告
+    code_refs:
+      - 部署系统/prototype/DeployReport.jsx
+    depends_on:
+      - dashboard
+      - deploy-config
+      - execution-verify
+      - resource-management
+      - uninstall
+    provides:
+      - deploy-report-document
+    used_by: []
+    states:
+      - verified
+      - failed
+      - uninstalled

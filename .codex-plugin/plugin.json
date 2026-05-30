@@ -1,0 +1,19 @@
+{
+  "name": "system-knowledge-plugin",
+  "version": "0.1.0",
+  "displayName": "System Knowledge Graph",
+  "description": "System knowledge graph infrastructure for agent-collaborative development: query feature dependencies, analyze change impact, and generate business-chain test paths.",
+  "shortDescription": "Query feature dependencies, analyze change impact, and generate business-chain test paths.",
+  "author": "Myzmzz",
+  "license": "MIT",
+  "category": "Code Quality",
+  "capabilities": [
+    "dependency-analysis",
+    "impact-analysis",
+    "test-planning",
+    "knowledge-graph"
+  ],
+  "websiteURL": "https://github.com/Myzmzz/system-knowledge-plugin",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

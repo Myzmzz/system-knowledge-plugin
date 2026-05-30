@@ -1,0 +1,42 @@
+# ============================================================================
+# test-paths.yaml — 业务链路测试路径登记表（GENERIC TEMPLATE / 通用模板）
+# ----------------------------------------------------------------------------
+# 本文件登记“测试路径”：针对某个目标功能 / 业务链路，要满足哪些前置条件、
+# 按什么顺序操作、断言什么、改动后需要回归哪些功能。
+# 测试路径不能只包含按钮动作，必须包含前置条件和后置验收。
+#
+# 用法：把下面的 example-test-path 占位路径复制一份，改成你自己的路径并删除占位。
+#       testPathId（map 的 key）必须是 kebab-case，且全局唯一。
+# ============================================================================
+
+# 根 key 必须是 test_paths，下面是 testPathId -> 测试路径定义 的映射。
+test_paths:
+  # ↓↓↓ 这是一个占位示例，请替换成你自己的测试路径并删除本条 ↓↓↓
+  example-test-path:
+    # name: 测试路径的人类可读名称（必填，不能为空）。
+    name: 示例测试路径
+
+    # target_feature: 本测试主要验证的目标功能 featureId（必填，kebab-case）。
+    #                 应在 features.yaml 中真实存在。
+    target_feature: example-feature
+
+    # journey: 关联的业务链路 journeyId（可选，kebab-case）。
+    #          应在 journeys.yaml 中真实存在。
+    journey: example-journey
+
+    # preconditions: 执行测试前需满足的前置条件列表（可选），自由文本。
+    preconditions:
+      - 占位前置条件：请替换为真实的、可检查的前置状态。
+
+    # steps: 测试操作步骤列表（可选），自由文本，按执行顺序排列。
+    steps:
+      - 占位步骤：请替换为真实的操作步骤。
+
+    # assertions: 测试断言 / 后置验收项列表（可选），自由文本。
+    assertions:
+      - 占位断言：请替换为可观察、可判定的真实断言。
+
+    # regression_scope: 该路径覆盖的回归范围 featureId 列表（可选，kebab-case）。
+    #                   应在 features.yaml 中真实存在。
+    regression_scope:
+      - example-feature

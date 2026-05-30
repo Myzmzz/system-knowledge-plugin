@@ -1,0 +1,94 @@
+# ============================================================================
+# entities.yaml — 部署与资源管理平台（DEPLOY-SYSTEM EXAMPLE）
+# ----------------------------------------------------------------------------
+# DeployTask 实体逐字取自 plunginintro.md §5.4，另补全它引用的
+# DeployApplication（appId -> DeployApplication.id）与 Cluster（clusterId -> Cluster.id）。
+# ============================================================================
+
+entities:
+  # --- §5.4 原文示例（逐字保留） ---------------------------------------------
+  DeployTask:
+    description: 一次应用部署任务。
+    fields:
+      id:
+        type: string
+        required: true
+      appId:
+        type: string
+        required: true
+        ref: DeployApplication.id
+      clusterId:
+        type: string
+        required: true
+        ref: Cluster.id
+      namespace:
+        type: string
+        required: true
+      releaseName:
+        type: string
+        required: true
+      status:
+        type: enum
+        required: true
+        values:
+          - draft
+          - configured
+          - precheck_passed
+          - running
+          - verified
+          - failed
+          - uninstalling
+          - uninstalled
+    used_by:
+      - dashboard
+      - deploy-config
+      - preflight
+      - execution-verify
+      - resource-management
+
+  # --- DeployTask.appId 引用的应用实体 ---------------------------------------
+  DeployApplication:
+    description: 一个待部署的应用，是部署资产与部署配置的来源。
+    fields:
+      id:
+        type: string
+        required: true
+      name:
+        type: string
+        required: true
+      version:
+        type: string
+        required: false
+      chartRef:
+        type: string
+        required: false
+    used_by:
+      - application-management
+      - deploy-assets
+      - deploy-config
+      - resource-management
+      - uninstall
+
+  # --- DeployTask.clusterId 引用的集群实体 -----------------------------------
+  Cluster:
+    description: 一个已接入的目标 Kubernetes 集群，部署的目标环境。
+    fields:
+      id:
+        type: string
+        required: true
+      name:
+        type: string
+        required: true
+      apiServer:
+        type: string
+        required: false
+      status:
+        type: enum
+        required: true
+        values:
+          - connected
+          - disconnected
+    used_by:
+      - cluster-management
+      - deploy-config
+      - resource-management

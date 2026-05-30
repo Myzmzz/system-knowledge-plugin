@@ -1,0 +1,80 @@
+# ============================================================================
+# dependencies.yaml — 部署与资源管理平台（DEPLOY-SYSTEM EXAMPLE）
+# ----------------------------------------------------------------------------
+# 登记功能节点之间的依赖边及原因。前两条边逐字取自 plunginintro.md §5.3，
+# 其余边补全完整部署主链路：
+#   cluster-management -> application-management -> deploy-assets
+#   -> deploy-config -> preflight -> execution-verify -> resource-management
+# 每条边都包含 type（data|state|gate|ui|external）与 reason。
+# ============================================================================
+
+dependencies:
+  # --- §5.3 原文示例（逐字保留） ---------------------------------------------
+  - from: deploy-assets
+    to: deploy-config
+    type: data
+    reason: 部署配置中的服务模块、依赖组件和 values 来源于资产解析结果。
+
+  - from: preflight
+    to: execution-verify
+    type: gate
+    reason: 预检通过或风险已确认后才允许进入部署执行。
+
+  # --- 完整主链路补全 --------------------------------------------------------
+  - from: cluster-management
+    to: application-management
+    type: data
+    reason: 应用管理需要先选定已接入的目标集群，才能确定应用的部署目标。
+
+  - from: application-management
+    to: deploy-assets
+    type: data
+    reason: 部署资产的上传与解析以当前选定的应用为上下文。
+
+  - from: deploy-config
+    to: preflight
+    type: data
+    reason: 预检依赖部署任务配置、服务参数与 Helm values 作为校验输入。
+
+  - from: execution-verify
+    to: resource-management
+    type: state
+    reason: 部署执行完成并验证通过后，资源管理才能同步到对应的 Kubernetes 资源。
+
+  # --- 入口 / 总览与外部系统等其余边 ----------------------------------------
+  - from: dashboard
+    to: cluster-management
+    type: ui
+    reason: 仪表盘作为统一入口，承载进入集群管理等部署流程功能的导航。
+
+  - from: cluster-management
+    to: resource-management
+    type: data
+    reason: 资源管理在选定集群的范围内同步与查询 Kubernetes 资源。
+
+  - from: application-management
+    to: resource-management
+    type: data
+    reason: 资源管理按当前应用过滤并展示其关联的已部署资源。
+
+  - from: execution-verify
+    to: deploy-report
+    type: data
+    reason: 部署报告汇总部署执行结果与 Release 状态。
+
+  - from: execution-verify
+    to: uninstall
+    type: state
+    reason: 仅当应用已成功部署并验证后，卸载操作才有可回收的 Release 与资源。
+
+  - from: resource-management
+    to: uninstall
+    type: data
+    reason: 卸载依据资源管理同步到的资源清单回收对应的 Kubernetes 资源。
+
+  # type: external 表示对真实外部系统（Kubernetes / Helm）的依赖。这里 from/to
+  # 都使用已登记功能，reason 中标注外部系统来源；真实状态仍由对应系统查询。
+  - from: cluster-management
+    to: deploy-config
+    type: external
+    reason: 部署配置依赖集群管理从真实 Kubernetes API 取得的集群连接与命名空间信息。

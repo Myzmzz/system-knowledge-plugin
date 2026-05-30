@@ -1,0 +1,15 @@
+{
+  "name": "system-knowledge",
+  "description": "系统知识图插件市场 — 面向智能体协作开发的系统知识基础设施（功能依赖图、变更影响分析、业务链路测试路径）。",
+  "owner": {
+    "name": "Myzmzz"
+  },
+  "plugins": [
+    {
+      "name": "system-knowledge-plugin",
+      "source": "./",
+      "description": "System knowledge graph infrastructure for agent-collaborative development: query feature dependencies, analyze change impact, and generate business-chain test paths.",
+      "version": "0.1.0"
+    }
+  ]
+}

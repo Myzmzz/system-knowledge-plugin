@@ -1,0 +1,45 @@
+# ============================================================================
+# entities.yaml — 核心数据实体登记表（GENERIC TEMPLATE / 通用模板）
+# ----------------------------------------------------------------------------
+# 本文件登记系统的核心数据实体及其字段，用于在功能依赖与状态流转之外，
+# 描述“数据长什么样、字段之间如何引用、哪些功能使用了它”。
+#
+# 用法：把下面的 ExampleEntity 占位实体复制一份，改成你自己的实体并删除占位条目。
+#       实体名（map 的 key）使用 PascalCase（大驼峰），例如 DeployTask、Cluster。
+# ============================================================================
+
+# 根 key 必须是 entities，下面是 实体名(PascalCase) -> 实体定义 的映射。
+entities:
+  # ↓↓↓ 这是一个占位示例，请替换成你自己的实体并删除本条 ↓↓↓
+  ExampleEntity:
+    # description: 一句话说明这个实体代表什么（可选）。
+    description: 这是一个占位实体，用于演示 entities.yaml 的结构，请替换为真实实体。
+
+    # fields: 字段名 -> 字段定义 的映射。每个字段定义可包含：
+    #   type     - 字段类型（必填），如 string、number、boolean、enum、datetime 等
+    #   required - 是否必填（可选，布尔值 true/false）
+    #   ref      - 跨实体引用（可选），写法为 "实体名.字段名"，如 "Cluster.id"
+    #   values   - 当 type 为 enum 时，列出允许的取值（可选）
+    fields:
+      id:
+        type: string
+        required: true
+
+      # 一个枚举字段的示例：通过 values 列出所有合法取值。
+      status:
+        type: enum
+        required: true
+        values:
+          - draft
+          - active
+
+      # 一个跨实体引用字段的示例：ref 指向另一个实体的字段。
+      relatedId:
+        type: string
+        required: false
+        ref: ExampleEntity.id
+
+    # used_by: 使用该实体的 featureId 列表（可选）。
+    #          每个 id 都必须是 kebab-case，并应在 features.yaml 中真实存在。
+    used_by:
+      - example-feature
