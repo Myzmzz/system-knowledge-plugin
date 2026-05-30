@@ -5,11 +5,5 @@
   "author": {
     "name": "Myzmzz"
   },
-  "skills": "./skills/",
-  "mcpServers": {
-    "system-knowledge": {
-      "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/index.js"]
-    }
-  }
+  "skills": "./skills/"
 }

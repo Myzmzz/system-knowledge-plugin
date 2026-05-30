@@ -7,7 +7,7 @@
   "plugins": [
     {
       "name": "system-knowledge-plugin",
-      "source": "./",
+      "source": "./plugins/claude-code",
       "description": "System knowledge graph infrastructure for agent-collaborative development: query feature dependencies, analyze change impact, and generate business-chain test paths.",
       "version": "0.1.0"
     }

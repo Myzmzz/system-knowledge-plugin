@@ -1,42 +1,55 @@
 // Build script: bundle the MCP server (TypeScript) into a single runnable
-// JavaScript file at `mcp/index.js`.
+// JavaScript file, then distribute it (and the shared skills) into BOTH plugin
+// packages.
 //
-// Why a single bundle: marketplace install for both Claude Code and Codex is a
-// `git clone` of this repo, so the runnable server must be in-tree and
-// self-contained (no `npm install` step at install time). esbuild inlines all
-// the third-party dependencies; only Node built-ins stay external.
+// Layout: the repo root holds the canonical source (mcp-server/, skills/). Each
+// distributable plugin lives under plugins/<tool>/ and must be SELF-CONTAINED,
+// because marketplace install for both Claude Code and Codex is a `git clone`
+// (or subdir checkout) of the plugin directory — there is no `npm install` step
+// at install time. So we commit the bundle + a copy of skills into each plugin.
 //
-// Both plugin forms point their MCP `command` at `node` and pass this file:
-//   - Claude Code: `${CLAUDE_PLUGIN_ROOT}/mcp/index.js` (inline mcpServers in
-//     .claude-plugin/plugin.json)
-//   - Codex:       `mcp/index.js` (relative path in .mcp.json)
+// Codex requires a plugin to live in a SUBDIRECTORY of the marketplace repo
+// (its source.path is e.g. "./plugins/codex"); it does not accept the repo root
+// itself as a plugin. Claude Code is kept symmetric for clarity.
+//
+// MCP server command per tool:
+//   - Claude Code: ${CLAUDE_PLUGIN_ROOT}/mcp/index.js (inline mcpServers)
+//   - Codex:       mcp/index.js (relative to plugin root, per Codex docs)
 
 import { build } from "esbuild";
 import { createRequire } from "node:module";
+import { cpSync, mkdirSync, rmSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
 const builtinModules = require("node:module").builtinModules;
 
-// Mark every Node built-in as external (both bare and `node:`-prefixed forms)
-// so esbuild does not try to bundle the standard library into the output.
+const ROOT = path.resolve(fileURLToPath(import.meta.url), "../..");
+const ENTRY = path.join(ROOT, "mcp-server/src/index.ts");
+const SKILLS_SRC = path.join(ROOT, "skills");
+
+// Mark every Node built-in as external (both bare and `node:`-prefixed forms).
 const nodeBuiltins = [
   ...builtinModules,
   ...builtinModules.map((name) => `node:${name}`),
 ];
 
-const ENTRY = "mcp-server/src/index.ts";
-const OUTFILE = "mcp/index.js";
+const PLUGIN_DIRS = [
+  path.join(ROOT, "plugins/claude-code"),
+  path.join(ROOT, "plugins/codex"),
+];
 
-async function main() {
+async function bundleInto(outfile) {
   await build({
     entryPoints: [ENTRY],
-    outfile: OUTFILE,
+    outfile,
     bundle: true,
     platform: "node",
     format: "esm",
     target: "node18",
     external: nodeBuiltins,
-    logLevel: "info",
+    logLevel: "error",
     // The output is ESM, but some transitive deps use CommonJS `require()` at
     // runtime (e.g. dynamic `require("process")`). esbuild's ESM output would
     // otherwise replace `require` with a stub that throws "Dynamic require of X
@@ -53,8 +66,22 @@ async function main() {
       ].join("\n"),
     },
   });
+}
 
-  console.log(`Build succeeded: ${ENTRY} -> ${OUTFILE}`);
+async function main() {
+  for (const dir of PLUGIN_DIRS) {
+    const mcpOut = path.join(dir, "mcp/index.js");
+    mkdirSync(path.dirname(mcpOut), { recursive: true });
+    await bundleInto(mcpOut);
+
+    // Sync the shared skills into the plugin package (self-contained install).
+    const skillsDest = path.join(dir, "skills");
+    rmSync(skillsDest, { recursive: true, force: true });
+    cpSync(SKILLS_SRC, skillsDest, { recursive: true });
+
+    console.log(`Built plugin package: ${path.relative(ROOT, dir)}`);
+  }
+  console.log("Build succeeded: mcp-server/src/index.ts -> plugins/*/mcp/index.js (+ skills synced)");
 }
 
 main().catch((error) => {
